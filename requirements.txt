@@ -1,0 +1,12 @@
+PyPDF2
+pandas
+numpy
+os
+re
+requests
+json
+nltk
+unidecode
+string
+stop_words
+flask
