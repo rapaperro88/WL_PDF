@@ -8,8 +8,8 @@ app = Flask(__name__)
 def home():
     return render_template('index.html')
 
-@app.route('/predict',methods=['POST'])
-def predict():
+@app.route('/extract',methods=['POST'])
+def extract():
     '''
     For rendering results on HTML GUI
     '''

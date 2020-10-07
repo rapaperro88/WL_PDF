@@ -1,0 +1,6 @@
+version: "3.8"
+services:
+  app:
+    image: wlpdf
+    volumes:
+      - C:\Users\utilisateur\Dropbox\SIMPLON\p--science_pdf_nlp:/wl_pdf

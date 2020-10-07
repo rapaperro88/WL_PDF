@@ -24,7 +24,7 @@ import string
 # ________________________________________________________________________________________
 
 def flask_test(path):
-    return path+"test passed !"
+    return path+ " " +"test passed !"
 
 def get_full_text(pdfReader):
     '''
@@ -53,7 +53,7 @@ def get_text_from_collection(path):
 
 def compile_vocabulary(list_strings):
     '''
-    Returns 
+    TODO : Returns 
     '''
     pass       
 

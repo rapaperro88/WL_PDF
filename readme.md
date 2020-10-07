@@ -15,3 +15,12 @@ In a python based routine :
 
 ## Installation
 
+### On your local machine
+
+1. Clone the repository (`git clone https://github.com/rapaperro88/WL_PDF.git`)
+2. Install the requirements (`pip install -r requirements.txt`)
+3. Run pdf_app.py (`python pdf_app.py`)
+
+### From a docker image
+
+1. 
