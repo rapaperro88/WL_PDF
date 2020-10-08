@@ -15,6 +15,8 @@ from nltk.stem import WordNetLemmatizer
 import stop_words
 import unidecode
 import string
+# Frontend
+import streamlit as st
 
 # ________________________________________________________________________________________
 # ________________________________________________________________________________________
@@ -230,3 +232,46 @@ def preprocessing(texte, return_str=False):
         return (" ").join(tokens)
     
     return tokens
+
+# ________________________________________________________________________________________
+# ________________________________________________________________________________________
+#
+#                          CLUSTERING
+# ________________________________________________________________________________________
+# ________________________________________________________________________________________
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ________________________________________________________________________________________
+# ________________________________________________________________________________________
+#
+#                          FRONTEND
+# ________________________________________________________________________________________
+# ________________________________________________________________________________________
+
+
+def file_selector(folder_path='./data', text="Select a file", file_ext=".csv"):
+        filenames = [n for n in os.listdir(folder_path) if n.endswith(file_ext)]
+        selected_filename = st.selectbox(text,filenames)
+        return os.path.join(folder_path,selected_filename)
+
+def cluster_abstracts(abstracts, labels):
+    img = np.random.random((56,56)) #Mapping of articles
+    clusters = [] # clusters
+
+    return img, clusters
+
+def similarity_test(text):
+    list_of_similar_items = None
+
+    return list_of_similar_items

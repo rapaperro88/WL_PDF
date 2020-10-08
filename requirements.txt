@@ -5,5 +5,5 @@ Unidecode==1.1.1
 requests==2.24.0
 nltk==3.5
 stop-words==2018.7.23
-flask==1.1.2
+streamlit
 
