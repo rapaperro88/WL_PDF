@@ -15,6 +15,10 @@ In a python based routine :
 
 ## Installation
 
+### Prerequisites
+
+* INDRA for pubmed abstract mining : https://indra.readthedocs.io/en/latest/installation.html
+
 ### On your local machine
 
 1. Clone the repository (`git clone https://github.com/rapaperro88/WL_PDF.git`)
@@ -24,3 +28,5 @@ In a python based routine :
 ### From a docker image
 
 1. 
+
+##
