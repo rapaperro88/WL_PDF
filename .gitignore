@@ -1,2 +1,11 @@
 ressources
 __pycache__
+data/Epigenetics_abstracts.csv
+data/Gene+therapy_abstracts.csv
+data/Genome+engineering_abstracts.csv
+data/Immunology_abstracts.csv
+data/Post-translational+modification_abstracts.csv
+data/Regulatory+element_abstracts.csv
+data/Sequence_abstracts.csv
+data/Transfection_abstracts.csv
+data/merged.csv

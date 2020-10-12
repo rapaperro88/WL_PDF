@@ -52,7 +52,7 @@ if task=="1. Cluster":
         labels = []
 
     # Run clustering
-    img, clusters = cluster_abstracts(abstracts, labels)
+    img, clusters = cluster_abstracts(df, abstracts, labels)
 
     # Display image
 

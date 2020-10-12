@@ -242,11 +242,33 @@ def preprocessing(texte, return_str=False):
 
 
 
+def cluster_abstracts(df, abstracts, labels):
+    img = np.random.random((56,56)) #Mapping of articles
+    clusters = [] # clusters
+
+    df["clean"] = df[""]
+
+    return img, clusters
+
+
+
+
+# ________________________________________________________________________________________
+# ________________________________________________________________________________________
+#
+#                          similarity
+# ________________________________________________________________________________________
+# ________________________________________________________________________________________
 
 
 
 
 
+
+def similarity_test(text):
+    list_of_similar_items = None
+
+    return list_of_similar_items
 
 
 
@@ -265,13 +287,5 @@ def file_selector(folder_path='./data', text="Select a file", file_ext=".csv"):
         selected_filename = st.selectbox(text,filenames)
         return os.path.join(folder_path,selected_filename)
 
-def cluster_abstracts(abstracts, labels):
-    img = np.random.random((56,56)) #Mapping of articles
-    clusters = [] # clusters
 
-    return img, clusters
 
-def similarity_test(text):
-    list_of_similar_items = None
-
-    return list_of_similar_items
