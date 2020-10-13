@@ -1,5 +1,9 @@
 import streamlit as st
+from gensim.models import LdaModel
+from gensim.corpora.mmcorpus import MmCorpus
+from gensim.test.utils import datapath
 from custom_functions import *
+from gensim.corpora import Dictionary
 
 # Sidebar==clustering:
     # enter csv 
@@ -35,7 +39,50 @@ if task=="1. Cluster":
     ''')
 
     # File selector
-    csv = file_selector(folder_path='./model', 
+    csv = file_selector(folder_path='./data_mining', 
+        text = "Select a csv file containing all your abstracts:", 
+        file_ext=".csv")
+
+    if csv != None:
+        # Read dataset
+        df = pd.read_csv(csv)
+        cols = list(df.columns)
+        st.dataframe(df.head(4))
+
+        if cols != None:
+            # Columns selection
+            abstracts = st.selectbox("Select abstract column", cols)
+            labels = st.selectbox("Select labels column", cols)
+
+            if st.button("Run clustering"):
+                # Run clustering
+                fig, clusters = cluster_abstracts(df, abstracts, labels)
+
+                # Display image
+                st.pyplot(fig=fig)
+
+                # Download clusters as csv
+                if st.button("Save clusters to txt"):
+                    np.savetxt('clusters.txt', clusters, delimiter=" ",  fmt="%s")
+
+
+#############################
+######## SIMILARITY #########
+#############################
+
+elif task=="2. Similarity Search":
+    st.header('Similarity Search')
+
+    st.markdown('''
+    In this section you will input a text or a paragraph. 
+    You will receive a suggestion of articles that are similar to this text.
+    ''')
+
+    # -------- TRAINING --------
+    st.subheader("Training")
+
+    # File selector
+    csv = file_selector(folder_path='./data_mining', 
         text = "Select a csv file containing all your abstracts:", 
         file_ext=".csv")
 
@@ -44,35 +91,42 @@ if task=="1. Cluster":
     cols = list(df.columns)
     st.dataframe(df.head(4))
 
-    # Columns selection
+    # Columns selection + number of topics input 
     abstracts = st.selectbox("Select abstract column", cols)
-    if st.radio("The data is labeled: ", ["No", "Yes"]) == "Yes":
-        labels = st.selectbox("Select labels column", cols)
-    else:
-        labels = []
+    labels = st.selectbox("Select labels column", cols)
+    num_topics = st.slider('How many topics do you have in your data ?', 5, 60, step=1, value=8)
 
-    # Run clustering
-    img, clusters = cluster_abstracts(df, abstracts, labels)
+    if st.button("Train LDA model"):
+        dictionary, corpus, lda = similarity_train(df, num_topics, abstracts, labels)
 
-    # Display image
+        # Save dictionary, corpus and lda model        
+        lda.save('model/lda.model')
+        MmCorpus.save_corpus("model/corpus.mm", corpus)
+        dictionary.save_as_text("model/dictionary.txt")
 
-    # Download clusters as csv
+        st.success("Model trained and saved successfully.")
 
-#############################
-######## SIMILARITY #########
-#############################
-if task=="2. Similarity Search":
-    st.header('Similarity Search')
+        for n in range(num_topics):            
+            st.text(f"topic {n}: {[t[0] for t in lda.show_topic(topicid=n, topn=5)]}") # list of tuples
+            
 
-    st.markdown('''
-    In this section you will input a text or a paragraph. 
-    You will receive a suggestion of articles that are similar to this text.
-    ''')
+
+    # -------- TEST --------
+    st.subheader("Test")
 
     text = st.text_area("Enter text here: ")
 
-    # Run similarity test
-    output = similarity_test(text)
+    if st.button("Suggest Articles"):
+        
+        # Load pretrained elements
+        corpus = MmCorpus('model/corpus.mm')
+        lda = LdaModel.load('model/lda.model')
+        dictionary = Dictionary.load_from_text("model/dictionary.txt")
 
-    
+        # Run similarity test
+        output = similarity_test(df, text, lda, corpus, dictionary,k=5)
 
+        # Print
+        st.success("Suggested Articles:")
+        for title in output[:5]:
+            st.text(title)

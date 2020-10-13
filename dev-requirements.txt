@@ -1,0 +1,14 @@
+PyPDF2
+Unidecode
+gensim
+indra
+matplotlib
+nltk
+numpy
+pandas
+scipy
+stop_words
+streamlit
+tika
+requests
+scikit_learn

@@ -15,6 +15,19 @@ from nltk.stem import WordNetLemmatizer
 import stop_words
 import unidecode
 import string
+# Clustering
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.manifold import TSNE
+from sklearn.preprocessing import LabelEncoder
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+# Similarity
+import gensim
+from gensim import models, corpora, similarities
+from gensim.models import LdaModel
+from indra.literature.pubmed_client import get_metadata_for_ids 
+from scipy.stats import entropy
+
 # Frontend
 import streamlit as st
 
@@ -24,9 +37,6 @@ import streamlit as st
 #                          METADATA FROM PDF FILE
 # ________________________________________________________________________________________
 # ________________________________________________________________________________________
-
-def flask_test(path):
-    return path+ " " +"test passed !"
 
 def get_full_text(pdfReader):
     '''
@@ -69,7 +79,7 @@ def get_pdf_data (path):
     pdf_filenames = [pdf for pdf in os.listdir(path) if pdf.endswith(".pdf")]
     
     columns = ["Publi_ID", "Year", "Authors", "Title", "Journal", 
-               "DOI", "Keywords", "Total", "words count", "AAV", "Frequency",
+            "DOI", "Keywords", "Total", "words count", "AAV", "Frequency",
                 "Publi_ID linked", "Lettre_Chiffre_Lettre"]
     
     df = pd.DataFrame(columns = columns) # df to fill
@@ -115,7 +125,7 @@ def get_pdf_data (path):
         # retrieve AAV
         try:
             aav = re.findall("(AAV-?[A-Za-z0-9]{1,9}) ", 
-                             full_text)
+                            full_text)
             aav = list(set(aav))
             df.at[i, 'AAV'] = aav
         except:
@@ -128,7 +138,7 @@ def get_pdf_data (path):
         except:
             try: # retrieve by most frequent regex match
                 doi = re.findall('(10[.][0-9]{4,}(?:[.][0-9]+)*\/(?:(?!["&\'<>])\S)+)', 
-                                 full_text)
+                                full_text)
                 doi = max(set(doi), key = doi.count)
                 df.at[i, 'DOI'] = doi
             except:
@@ -199,10 +209,10 @@ def get_crossref_metadata(df):
 
 def preprocessing(texte, return_str=False):
     tex = []
-   
+
     # lower case
     texte = unidecode.unidecode(texte.lower())
-   
+
     # remove special characters
     texte = re.sub(r'\n', ' ', texte)
     texte = re.sub(r'\d+', '', texte)
@@ -241,17 +251,44 @@ def preprocessing(texte, return_str=False):
 # ________________________________________________________________________________________
 
 
-
+@st.cache(suppress_st_warning=True)
 def cluster_abstracts(df, abstracts, labels):
-    img = np.random.random((56,56)) #Mapping of articles
-    clusters = [] # clusters
+    '''
+    df: pandas dataframe
+    abstracts: string, name of abstracts column
+    labels: string, name of topics column
+    '''
+    # Preprocess abstract
+    df["clean"] = df[abstracts].apply(lambda x: preprocessing(x, return_str=True))
+    df["tokens"] = df[abstracts].apply(lambda x: preprocessing(x, return_str=False))
 
-    df["clean"] = df[""]
+    # Encode topics
+    le = LabelEncoder()
+    y_true = le.fit_transform(df[labels].values)
 
-    return img, clusters
+    # Embedding of clean string
+    print("vectorizing with TF-IDF")
+    vectorizer = TfidfVectorizer(stop_words='english')
+    X = vectorizer.fit_transform(df[abstracts])
 
+    # Cluster with kmeans
+    print("Clustering using KMeans")
+    true_k = len(df[labels].unique()) # TODO: select number of clusters by silhouette score
+    model = KMeans(n_clusters=true_k, init='k-means++', max_iter=100, n_init=1)
+    model.fit(X)
 
+    # Perform tSNE to reduce dimensions to 2
+    print("Dimension reduction with t-SNE")
+    tsne = TSNE(n_components=3, verbose=0, perplexity=100, random_state=0, n_jobs=-1)
+    X_embedded = tsne.fit_transform(X)
 
+    # Display clusters
+    print("Generating visualisation")
+    fig, ax = plt.subplots()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(X_embedded[:,0], X_embedded[:,1],  X_embedded[:,2], c=model.labels_, marker=".") # Mapping of articles
+
+    return fig, model.labels_
 
 # ________________________________________________________________________________________
 # ________________________________________________________________________________________
@@ -260,15 +297,71 @@ def cluster_abstracts(df, abstracts, labels):
 # ________________________________________________________________________________________
 # ________________________________________________________________________________________
 
+def similarity_train(df, num_topics, abstracts, labels):
+    '''
+    Implementation of LDA with the inputed data
+    '''
+    # Preprocess abstract
+    df["clean"] = df[abstracts].apply(lambda x: preprocessing(x, return_str=True))
+    df["tokens"] = df[abstracts].apply(lambda x: preprocessing(x, return_str=False))
 
+    num_topics = num_topics
+    chunksize = 300
+    dictionary = corpora.Dictionary(df["tokens"])
+    corpus = [dictionary.doc2bow(doc) for doc in df["tokens"].values]
 
+    # low alpha means each document is only represented by a small number of topics, and vice versa
+    # low eta means each topic is only represented by a small number of words, and vice versa
+    lda = LdaModel(corpus=corpus, num_topics=num_topics, id2word=dictionary,
+                alpha=1e-2, eta=0.5e-2, chunksize=chunksize, minimum_probability=0.0, passes=2)
 
+    return dictionary,corpus,lda
 
+def jensen_shannon(query, matrix):
+    """
+    This function implements a Jensen-Shannon similarity
+    between the input query (an LDA topic distribution for a document)
+    and the entire corpus of topic distributions.
+    It returns an array of length M where M is the number of documents in the corpus
+    from: https://www.kaggle.com/ktattan/lda-and-document-similarity
+    """
+    # lets keep with the p,q notation above
+    p = query[None,:].T # take transpose
+    q = matrix.T # transpose matrix
+    m = 0.5*(p + q)
+    pp = np.repeat(query[None,:].T, repeats=matrix.shape[0], axis=1)
+    return np.sqrt(0.5*(entropy(pp,m) + entropy(q,m)))
 
-def similarity_test(text):
-    list_of_similar_items = None
+def get_most_similar_documents(query,matrix,k):
+    """
+    This function implements the Jensen-Shannon distance above
+    and retruns the top k indices of the smallest jensen shannon distances
+    from: https://www.kaggle.com/ktattan/lda-and-document-similarity
+    """
+    sims = jensen_shannon(query,matrix) # list of jensen shannon distances
+    return sims.argsort()[:k] # the top k positional index of the smallest Jensen Shannon distances
 
-    return list_of_similar_items
+def similarity_test(df, text, model, corpus, dictionary, k):
+
+    # Training info
+    doc_topic_dist = np.array([[tup[1] for tup in lst] for lst in model[corpus]])
+
+    # text: From tokens to topic distribution
+    new_bow = dictionary.doc2bow(preprocessing(text, return_str=False))
+    new_doc_distribution = np.array([tup[1] for tup in model.get_document_topics(bow=new_bow)])
+
+    # Get most similar documents ids from df
+    most_sim_ids = get_most_similar_documents(new_doc_distribution,doc_topic_dist, k=10)
+
+    # Get most similar items from df
+    pubmed_id_column_index = 0
+    li = list(df.iloc[list(most_sim_ids), pubmed_id_column_index].values)
+
+    # query pubmed info:
+    suggest = get_metadata_for_ids(li)
+    title_list = [val["title"] for val in suggest.values()]
+
+    return title_list
 
 
 
