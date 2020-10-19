@@ -1,9 +1,15 @@
-numpy==1.18.2
-pandas==1.1.2
-PyPDF2==1.26.0
-Unidecode==1.1.1
-requests==2.24.0
-nltk==3.5
-stop-words==2018.7.23
+PyPDF2
+Unidecode
+gensim
+indra
+matplotlib
+nltk
+numpy
+pandas
+scipy
+stop_words
 streamlit
+tika
+requests
+scikit_learn
 
