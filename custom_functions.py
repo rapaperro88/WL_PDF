@@ -353,15 +353,15 @@ def similarity_test(df, text, model, corpus, dictionary, k):
     # Get most similar documents ids from df
     most_sim_ids = get_most_similar_documents(new_doc_distribution,doc_topic_dist, k=10)
 
-    # Get most similar items from df
-    pubmed_id_column_index = 0
-    li = list(df.iloc[list(most_sim_ids), pubmed_id_column_index].values)
+    # # Get most similar items from df
+    # pubmed_id_column_index = 0
+    # li = list(df.iloc[list(most_sim_ids), pubmed_id_column_index].values)
 
-    # query pubmed info:
-    suggest = get_metadata_for_ids(li)
-    title_list = [val["title"] for val in suggest.values()]
+    # # query pubmed info:
+    # suggest = get_metadata_for_ids(li)
+    # title_list = [val["title"] for val in suggest.values()]
 
-    return title_list
+    return  most_sim_ids
 
 
 

@@ -108,8 +108,6 @@ elif task=="2. Similarity Search":
 
         for n in range(num_topics):            
             st.text(f"topic {n}: {[t[0] for t in lda.show_topic(topicid=n, topn=5)]}") # list of tuples
-            
-
 
     # -------- TEST --------
     st.subheader("Test")
@@ -117,7 +115,7 @@ elif task=="2. Similarity Search":
     text = st.text_area("Enter text here: ")
 
     if st.button("Suggest Articles"):
-        
+
         # Load pretrained elements
         corpus = MmCorpus('model/corpus.mm')
         lda = LdaModel.load('model/lda.model')
@@ -125,6 +123,8 @@ elif task=="2. Similarity Search":
 
         # Run similarity test
         output = similarity_test(df, text, lda, corpus, dictionary,k=5)
+
+
 
         # Print
         st.success("Suggested Articles:")
